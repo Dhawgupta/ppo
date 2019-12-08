@@ -1,0 +1,12 @@
+
+.DS_Store
+
+*.pyc
+
+.idea/
+
+.ipynb_checkpoints/
+
+*.pkl
+
+*.0
