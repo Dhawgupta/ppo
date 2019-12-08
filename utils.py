@@ -8,6 +8,23 @@ from senseact.envs.ur.reacher_env import ReacherEnv
 from senseact.utils import tf_set_seeds, NormalizedEnv
 
 def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale_action = False):
+    """This will be cused to collect a batch of the data
+    
+    Arguments:
+        batch_size {int} -- [description]
+        agent {PPO} -- [description]
+        env {gym.env} -- [description]
+        l {float} -- [description]
+        gamma {float} -- [description]
+        stats {dict} -- Store the statisitics ion the dictionary
+    
+    Keyword Arguments:
+        render {bool} -- [description] (default: {False})
+        scale_action {bool} -- scale the action for the enviornemnt (default: {False})
+    
+    Returns:
+        list() -- return the batch
+    """    
     # print("Scale Action  {}".format(scale_action))
     stats['update_eps'].append(len(stats['time_at_end_eps']))
     batch = []
@@ -19,6 +36,7 @@ def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale
         actions = []
         log_probs = []
         values = []
+        obs = agent.normalize_observation(obs)
         observations = [obs]
         rewards = []
         stats['eps_len'].append(0)
@@ -40,8 +58,8 @@ def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale
             else:
                 new_action = action
             print("ACtion  : {}".format(new_action))
-            new_obs, reward, done, info = env.step(np.array(new_action)) # changed to list for ur5
-            new_obs = new_obs
+            new_obs, reward, done, info = env.step(new_action) # changed to list for ur5
+            new_obs = agent.normalize_observation( new_obs)
             observations.append(new_obs)
             rewards.append(reward)
             log_probs.append(log_prob)
@@ -78,6 +96,43 @@ def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale
     return batch
 
 
+def normalize_observation(obs, rms) : 
+    '''
+    '''
+    return rms.update(obs)
+
+
+
+
+
+class RunningMeanSTD(object):
+    def __init__(self, obs_size):
+        # this will be used to maintinta the running mean sand the standartdd deviation
+        self.__mean = np.zeros(obs_size)
+        self.__var = np.zeros(obs_size)
+        self.__no_obs = 0
+    
+    def update(self,obs):
+        '''
+        Return the normalized observation 
+        and update the parameters appropriately
+        '''
+        lentype = len(obs.shape)
+        obs = obs.reshape([-1])
+        # update the statistics
+        self.__mean  = self.__mean*(self.__no_obs / ( 1 + self.__no_obs)) + obs * (1 / (1 + self.__no_obs))
+        self.__var = self.__var*(self.__no_obs / ( 1 + self.__no_obs)) + ( (self.__mean - obs)**2 )*(1 / (1 + self.__no_obs) )
+        self.__no_obs +=1 
+        # normalzie the observation
+        new_obs = (obs - self.__mean)/np.sqrt(self.__var)
+        if lentype == 1:
+            return new_obs
+        else:
+            return new_obs.reshape([1,-1])
+
+
+
+        
 
 class EnvWrapper:
     def __init__(self, env):
@@ -97,7 +152,12 @@ class EnvWrapper:
 
 
     def step(self, action):
-        ob, r, d, info = self.env.step(action)
+        '''
+        action entered will probably be a scalar 
+        convert it to a list
+        '''
+        
+        ob, r, d, info = self.env.step(np.array(action)) # converted the aciton into an array
         self.ep_steps += 1
         self.ep_reward += r
         if self.env.reward_type == 'sparse':

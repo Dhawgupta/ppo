@@ -10,7 +10,7 @@ from torch.distributions.normal import Normal
 import time
 import sys
 from torch.distributions.multivariate_normal import  MultivariateNormal
-
+from utils import RunningMeanSTD
 
 class PPO:
     def __init__(self,
@@ -25,7 +25,8 @@ class PPO:
                  eps=0.2,  # epsilon value used in PPO clipping
                  summary_writer: SummaryWriter = None,
                  optimizer = 'adam',
-                 lr = 0.001):
+                 lr = 0.001, 
+                 normalize_obs = False):
         self.device = device
 
         self.batch_size = batch_size
@@ -38,6 +39,10 @@ class PPO:
         self.global_start_time = time.time()
         self.state_size = state_size
         self.network = network
+        self.rms = None
+        if normalize_obs :
+            self.rms = RunningMeanSTD(state_size)
+        self.normalize_obs = normalize_obs
         # self.optimizer = torch.optim.Adam(self.network.parameters(), lr = 0.0001)
         print("Using optimizer {} with lr = {}".format(optimizer, lr))
         if optimizer.lower() == 'rmsprop':
@@ -48,6 +53,13 @@ class PPO:
         self.counter = 0
         self.updates_to_policy = 0 # this will keep a track on  the number of updates on policy
 
+    def normlize_observation(self, obs):
+        if self.normalize_obs:
+            return self.rms.update(obs)
+        else:
+            return obs
+
+            
     def step(self, state,  terminal):
         """
         You will need some step function which returns the action.

@@ -31,7 +31,7 @@ from utils import  env_fn, collect_batch
 stats = dict()
 
 def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_count, gamma, l, max_action, outdir,
-         ep_time, updates, optimizer, lr,scale_action, env_type):
+         ep_time, updates, optimizer, lr,scale_action, env_type,normalize_observation ):
     
     stats['cycle_time'] = cycle_time
     stats['eps_len'] = ep_time
@@ -45,6 +45,7 @@ def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_cou
     stats['time_at_end_update'] = []
     stats['start_time'] = time.time()
     stats['eps_len'] = [] # store the length of each eps
+    stats['normalize_observation'] = normalize_observation
     # stats['total_steps'] = 0
     stats['optimizer'] = optimizer
     stats['lr'] = lr
@@ -96,7 +97,8 @@ def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_cou
                  epoch_count = epoch_count,
                  summary_writer = summary_writer,
                  optimizer = optimizer,
-                 lr = lr
+                 lr = lr,
+                 normalize_obs = normalize_observation,
                  )
 
     # This will  do this many updates
@@ -148,6 +150,7 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--scale_action",type = bool, default=True, help = "This will tell wether to scale the action or not")
     parser.add_argument('--env_type', type  = str, default  = 'reacher', help =  'env specification')
+    parser.add_argument('--normalize_observation', type = bool, default  = False, help = 'Normalie the iobservation')
     args = parser.parse_args()
     print(args)
     main(**args.__dict__)
