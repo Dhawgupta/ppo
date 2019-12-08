@@ -52,10 +52,12 @@ def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale
                 except:
                     pass
             actions.append(action)
+            print(f"Scale {scale_action}")
             if scale_action:
                 print("Scaling Value : {}".format(agent.network.scale_action))
                 new_action = np.tanh( action ) * agent.network.scale_action
             else:
+                print("Not scaling action")
                 new_action = action
             print("ACtion  : {}".format(new_action))
             new_obs, reward, done, info = env.step(new_action) # changed to list for ur5
@@ -64,7 +66,7 @@ def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale
             rewards.append(reward)
             log_probs.append(log_prob)
             values.append(value)
-            # print("{:<30} | {:<30} | {:30} | {:<30} | {}".format(str(obs), str(new_action), str(reward), str(new_obs), done))
+            print("{:<30} | {:<30} | {:30} | {:<30} | {}".format(str(obs), str(new_action), str(reward), str(new_obs), done))
             obs = new_obs
         env.reset() # reset to stop the motor from turning unnceseeatly
         values.append(agent.network.get_value(obs))
@@ -124,7 +126,7 @@ class RunningMeanSTD(object):
         self.__var = self.__var*(self.__no_obs / ( 1 + self.__no_obs)) + ( (self.__mean - obs)**2 )*(1 / (1 + self.__no_obs) )
         self.__no_obs +=1 
         # normalzie the observation
-        new_obs = (obs - self.__mean)/np.sqrt(self.__var)
+        new_obs = (obs - self.__mean)/ ( np.sqrt(self.__var) + 1e-5*np.ones_like(self.__mean))
         if lentype == 1:
             return new_obs
         else:

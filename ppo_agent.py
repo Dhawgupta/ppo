@@ -53,13 +53,13 @@ class PPO:
         self.counter = 0
         self.updates_to_policy = 0 # this will keep a track on  the number of updates on policy
 
-    def normlize_observation(self, obs):
+    def normalize_observation(self, obs):
         if self.normalize_obs:
             return self.rms.update(obs)
         else:
             return obs
 
-            
+
     def step(self, state,  terminal):
         """
         You will need some step function which returns the action.

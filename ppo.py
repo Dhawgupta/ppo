@@ -31,7 +31,7 @@ from utils import  env_fn, collect_batch
 stats = dict()
 
 def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_count, gamma, l, max_action, outdir,
-         ep_time, updates, optimizer, lr,scale_action, env_type,normalize_observation ):
+         ep_time, updates, optimizer, lr,scale_action  , env_type,normalize_observation ):
     
     stats['cycle_time'] = cycle_time
     stats['eps_len'] = ep_time
@@ -86,7 +86,7 @@ def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_cou
     # CHANGEME : chnage the range  of action_limits
     actions_space = env.action_space.shape[0]
     print("Observation Length : {}\nAction Lenght : {}".format(obs_len, actions_space))
-    nnet =  PPONetwork( action_count= actions_space, in_size= obs_len, action_limits = [-max_action,max_action], scale_action  =max_action)
+    nnet =  PPONetwork( action_count= actions_space, in_size= obs_len, action_limits = [-max_action,max_action], scale_action  = max_action)
     nnet.to(device)
     nnet = nnet.double()
     agent = PPO (device = device,  # cpu or cuda
@@ -126,6 +126,7 @@ def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_cou
     env.close()
 
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--cycle_time", type=float, default=0.040, help="sense-act cycle time")
@@ -136,7 +137,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch_size", type=int, default=2000,
                         help="How many samples to record for each learning update")
     parser.add_argument("--mini_batch_size", type=int, default=40, help="Number of division to divide batch into")
-    parser.add_argument("--epoch_count", type=int, default=15,
+    parser.add_argument("--epoch_count", type=int, default=20,
                         help="Number of times to train over the entire batch per update.")
     parser.add_argument("--gamma", type=float, default=0.99, help="discount")
     parser.add_argument("--l", type=float, default=0.95, help="lambda for lambda return")
@@ -147,8 +148,8 @@ if __name__ == "__main__":
     parser.add_argument("--ep_time", type=float, default=2.0, help="number of seconds to run for each episode.")
     parser.add_argument("--updates", type=int, default=400, help="Number of On Policy batch updates")
     parser.add_argument("--optimizer", type=str, default='adam', help="type of optimizer to use")
-    parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
-    parser.add_argument("--scale_action",type = bool, default=True, help = "This will tell wether to scale the action or not")
+    parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate")
+    parser.add_argument("--scale_action",type = bool, default=False, help = "This will tell wether to scale the action or not")
     parser.add_argument('--env_type', type  = str, default  = 'reacher', help =  'env specification')
     parser.add_argument('--normalize_observation', type = bool, default  = False, help = 'Normalie the iobservation')
     args = parser.parse_args()

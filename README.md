@@ -19,3 +19,7 @@ The current implementation follows the 9 steps that are mentioned in the lecture
 4. ***Clip all the gradients"***
 5. ***Value Clipping*** : Clip the value doifference.
 
+
+Problems : 
+Hmm , it seems that the sacle action false is not working
+sedcoiind, need to test the noramlization of th observatio spac eand also need to clips the observations between -0.5, 0.5
