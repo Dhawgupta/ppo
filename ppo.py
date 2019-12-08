@@ -14,10 +14,10 @@ import pickle as pkl
 import time
 from gym.spaces import Box
 from gym.envs.robotics.fetch.reach import FetchReachEnv
-
 # imports for the UR5
 from utils import robotic_env_fn
 # not going  to teh tf_seeds fucntion from  senseact.utils
+from utils import str2bool
 
 
 # from baselines.common.vec_env import SubprocVecEnv
@@ -31,7 +31,7 @@ from utils import  env_fn, collect_batch
 stats = dict()
 
 def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_count, gamma, l, max_action, outdir,
-         ep_time, updates, optimizer, lr,scale_action  , env_type,normalize_observation ):
+         ep_time, updates, optimizer, lr,scale_action  , env_type,normalize_observation , vfc, grad_clip, value_clip):
     
     stats['cycle_time'] = cycle_time
     stats['eps_len'] = ep_time
@@ -99,6 +99,9 @@ def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_cou
                  optimizer = optimizer,
                  lr = lr,
                  normalize_obs = normalize_observation,
+                 vfc = vfc, 
+                 grad_clip = grad_clip, 
+                 value_clip = value_clip,
                  )
 
     # This will  do this many updates
@@ -149,10 +152,15 @@ if __name__ == "__main__":
     parser.add_argument("--updates", type=int, default=400, help="Number of On Policy batch updates")
     parser.add_argument("--optimizer", type=str, default='adam', help="type of optimizer to use")
     parser.add_argument("--lr", type=float, default=3e-4, help="Learning rate")
-    parser.add_argument("--scale_action",type = bool, default=False, help = "This will tell wether to scale the action or not")
+    parser.add_argument("--scale_action",type = str2bool, default=False, help = "This will tell wether to scale the action or not")
     parser.add_argument('--env_type', type  = str, default  = 'reacher', help =  'env specification')
-    parser.add_argument('--normalize_observation', type = bool, default  = False, help = 'Normalie the iobservation')
+    parser.add_argument('--normalize_observation', type = str2bool, default  = False, help = 'Normalie the iobservation')
+    parser.add_argument('--vfc',type = float, default = 1.0 , help = 'The value loss coeffecient')
+    parser.add_argument('--grad_clip', type = float , default = None, help = 'The valuie by whiuch gradioent should be clipped None -> no clipping')
+    parser.add_argument('--value_clip', type = float, default = None, help  = 'THer value by which we should clip the value loss')
+
     args = parser.parse_args()
     print(args)
+    time.sleep(5)
     main(**args.__dict__)
     

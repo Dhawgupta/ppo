@@ -6,6 +6,7 @@ from gym.spaces import Box
 from gym.envs.robotics.fetch.reach import FetchReachEnv
 from senseact.envs.ur.reacher_env import ReacherEnv
 from senseact.utils import tf_set_seeds, NormalizedEnv
+import distutils
 
 def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale_action = False):
     """This will be cused to collect a batch of the data
@@ -108,17 +109,19 @@ def normalize_observation(obs, rms) :
 
 
 class RunningMeanSTD(object):
-    def __init__(self, obs_size):
+    def __init__(self, obs_size, clips = [-5.0, 5.0]):
         # this will be used to maintinta the running mean sand the standartdd deviation
         self.__mean = np.zeros(obs_size)
         self.__var = np.zeros(obs_size)
         self.__no_obs = 0
+        self.__clips = clips
     
     def update(self,obs):
         '''
         Return the normalized observation 
         and update the parameters appropriately
         '''
+        print("Normalizing Observation")
         lentype = len(obs.shape)
         obs = obs.reshape([-1])
         # update the statistics
@@ -127,11 +130,11 @@ class RunningMeanSTD(object):
         self.__no_obs +=1 
         # normalzie the observation
         new_obs = (obs - self.__mean)/ ( np.sqrt(self.__var) + 1e-5*np.ones_like(self.__mean))
+        # clip the observation
         if lentype == 1:
-            return new_obs
+            return np.clip(new_obs, np.min(self.__clips), np.max(self.__clips))
         else:
-            return new_obs.reshape([1,-1])
-
+            return np.clip(new_obs.reshape([1,-1]), np.min(self.__clips), np.max(self.__clips))
 
 
         
@@ -249,3 +252,6 @@ def robotic_env():
 def robotic_env_fn():
     env = robotic_env()
     return UR5EnvWrapper(env)
+
+def str2bool(v):
+    return bool(distutils.util.strtobool(v))

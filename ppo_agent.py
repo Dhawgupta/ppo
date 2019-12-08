@@ -26,7 +26,12 @@ class PPO:
                  summary_writer: SummaryWriter = None,
                  optimizer = 'adam',
                  lr = 0.001, 
-                 normalize_obs = False):
+                 normalize_obs = False,
+                 vfc = 1,
+                 grad_clip = None, 
+                 value_clip = None,
+
+                 ):
         self.device = device
 
         self.batch_size = batch_size
@@ -52,6 +57,9 @@ class PPO:
         print(self.optimizer)
         self.counter = 0
         self.updates_to_policy = 0 # this will keep a track on  the number of updates on policy
+        self.vfc = vfc
+        self.value_clip = value_clip
+        self.grad_clip = grad_clip
 
     def normalize_observation(self, obs):
         if self.normalize_obs:
@@ -246,18 +254,21 @@ class PPO:
                 # print("Value  :", value, value.shape)
 
                 loss_value = mseloss(lambda_returns, value)
+                if self.value_clip is not None:
+                    loss_value = torch.clamp(loss_value, min = - self.value_clip, max = +self.value_clip)
                 # print("Loss Value : ", loss_value, loss_value.shape)
                 # print("Loss Policy : ", loss_policy , loss_policy.shape)
                 self.summary_writer.add_scalar("Losses/Value", loss_value.item(), self.updates_to_policy)
                 self.summary_writer.add_scalar("Losses/Policy", loss_policy.item(),self.updates_to_policy)
-                loss_combined = 0.1 * loss_policy + loss_value
+                loss_combined =  loss_policy +  self.vfc * loss_value
                 # print("Loss combined : ", loss_combined, loss_combined.shape)
                 loss_combined.backward()
+                if self.grad_clip is not None:
+                    torch.nn.utils.clip_grad_value_(self.network.parameters(), self.grad_clip) #  currently clipping the gradient by 0.5
                 with torch.no_grad():
 
                     for name, weight in self.network.named_parameters():
                         self.summary_writer.add_scalar(f"Gradients/{name}", torch.norm(weight.grad).item() ,  self.updates_to_policy )
-
                 self.updates_to_policy +=1
                 self.optimizer.step()
             
