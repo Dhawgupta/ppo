@@ -28,8 +28,9 @@ class PPO:
                  lr = 0.001, 
                  normalize_obs = False,
                  vfc = 1,
-                 grad_clip = None, 
+                 grad_clip_value = None, 
                  value_clip = None,
+                 grad_clip_norm = None,
 
                  ):
         self.device = device
@@ -59,7 +60,9 @@ class PPO:
         self.updates_to_policy = 0 # this will keep a track on  the number of updates on policy
         self.vfc = vfc
         self.value_clip = value_clip
-        self.grad_clip = grad_clip
+        self.grad_clip_value = grad_clip_value
+        self.grad_clip_norm = grad_clip_norm
+
 
     def normalize_observation(self, obs):
         if self.normalize_obs:
@@ -263,8 +266,12 @@ class PPO:
                 loss_combined =  loss_policy +  self.vfc * loss_value
                 # print("Loss combined : ", loss_combined, loss_combined.shape)
                 loss_combined.backward()
-                if self.grad_clip is not None:
-                    torch.nn.utils.clip_grad_value_(self.network.parameters(), self.grad_clip) #  currently clipping the gradient by 0.5
+                if self.grad_clip_value is not None:
+                    torch.nn.utils.clip_grad_value_(self.network.parameters(), self.grad_clip_value) #  currently clipping the gradient by 0.5
+                    # torch.nn.utils.clip_grad_norm_(self.network.parameters(), self.grad_clip) # clip with respect to the norm of the gradient
+                if self.grad_clip_norm is not None:
+                    torch.nn.utils.clip_grad_norm_(self.network.parameters(), self.grad_clip_norm )
+
                 with torch.no_grad():
 
                     for name, weight in self.network.named_parameters():

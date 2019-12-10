@@ -7,8 +7,10 @@ from gym.envs.robotics.fetch.reach import FetchReachEnv
 from senseact.envs.ur.reacher_env import ReacherEnv
 from senseact.utils import tf_set_seeds, NormalizedEnv
 import distutils
+import csv
+import os
 
-def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale_action = False):
+def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale_action = False, file_returns = None):
     """This will be cused to collect a batch of the data
     
     Arguments:
@@ -29,6 +31,7 @@ def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale
     # print("Scale Action  {}".format(scale_action))
     stats['update_eps'].append(len(stats['time_at_end_eps']))
     batch = []
+    ep_returns = []  
         # start collecting batch
     while len(batch) < batch_size - 1:
         # reset the env
@@ -67,7 +70,7 @@ def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale
             rewards.append(reward)
             log_probs.append(log_prob)
             values.append(value)
-            print("{:<30} | {:<30} | {:30} | {:<30} | {}".format(str(obs), str(new_action), str(reward), str(new_obs), done))
+            # print("{:<30} | {:<30} | {:30} | {:<30} | {}".format(str(obs), str(new_action), str(reward), str(new_obs), done))
             obs = new_obs
         env.reset() # reset to stop the motor from turning unnceseeatly
         values.append(agent.network.get_value(obs))
@@ -76,7 +79,9 @@ def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale
         stats['total_returns'].append(np.sum(rewards))
         stats['time_at_end_eps'].append(time.time() -  agent.global_start_time)
         G,Gl, H = agent.compute_return(r_buffer =  rewards,v_buffer =  values, l  = l, gamma = gamma)
-
+        # save the returns into the csv file
+        ep_returns.append(np.mean(rewards))
+        
         # Put them in the batchs
         #append transition to the batch
         for t in range(len(G)):
@@ -93,6 +98,15 @@ def collect_batch(batch_size, agent, env, l, gamma,stats, render  = False, scale
 
                 }
             )
+    if file_returns is not None:
+        # if not os.path.exists('./results/' +file_returns):
+        #     with open("./results/" + file_returns, 'w') as f:
+        #         wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+        #         wr.writerow(np.sum(rewards))
+            
+        with open("./results/" + file_returns, 'a') as f:
+            wr = csv.writer(f, quoting=csv.QUOTE_ALL)
+            wr.writerow(ep_returns)
 
     np.random.shuffle(batch)
     batch = batch[:batch_size]

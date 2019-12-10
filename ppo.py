@@ -7,7 +7,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from ppo_agent import PPO
 import gym
-from network import PPONetwork
+from network import PPONetwork, PPONetwork2
 from ppo_agent import PPO
 import numpy as np
 import pickle as pkl
@@ -31,7 +31,7 @@ from utils import  env_fn, collect_batch
 stats = dict()
 
 def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_count, gamma, l, max_action, outdir,
-         ep_time, updates, optimizer, lr,scale_action  , env_type,normalize_observation , vfc, grad_clip, value_clip):
+         ep_time, updates, optimizer, lr,scale_action  , env_type,normalize_observation , vfc, grad_clip_value, value_clip,  file_returns, grad_clip_norm):
     
     stats['cycle_time'] = cycle_time
     stats['eps_len'] = ep_time
@@ -86,7 +86,9 @@ def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_cou
     # CHANGEME : chnage the range  of action_limits
     actions_space = env.action_space.shape[0]
     print("Observation Length : {}\nAction Lenght : {}".format(obs_len, actions_space))
+
     nnet =  PPONetwork( action_count= actions_space, in_size= obs_len, action_limits = [-max_action,max_action], scale_action  = max_action)
+    nnet =  PPONetwork2( action_count= actions_space, in_size= obs_len, action_limits = [-max_action,max_action], scale_action  = max_action)
     nnet.to(device)
     nnet = nnet.double()
     agent = PPO (device = device,  # cpu or cuda
@@ -100,14 +102,15 @@ def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_cou
                  lr = lr,
                  normalize_obs = normalize_observation,
                  vfc = vfc, 
-                 grad_clip = grad_clip, 
+                 grad_clip_value = grad_clip_value, 
                  value_clip = value_clip,
+                 grad_clip_norm = grad_clip_norm,
                  )
 
     # This will  do this many updates
 
     for u in range(updates):
-        batch = collect_batch(batch_size  = batch_size, agent  = agent, env = env, l =l , gamma = gamma,stats= stats, scale_action = scale_action)
+        batch = collect_batch(batch_size  = batch_size, agent  = agent, env = env, l =l , gamma = gamma,stats= stats, scale_action = scale_action  , file_returns = file_returns)
 
         # now we will run epochs on this batch
         # agent.learn_vectorized(batch)
@@ -156,8 +159,13 @@ if __name__ == "__main__":
     parser.add_argument('--env_type', type  = str, default  = 'reacher', help =  'env specification')
     parser.add_argument('--normalize_observation', type = str2bool, default  = False, help = 'Normalie the iobservation')
     parser.add_argument('--vfc',type = float, default = 1.0 , help = 'The value loss coeffecient')
-    parser.add_argument('--grad_clip', type = float , default = None, help = 'The valuie by whiuch gradioent should be clipped None -> no clipping')
+    parser.add_argument('--grad_clip_value', type = float , default = None, help = 'The valuie by whiuch gradioent should be clipped None -> no clipping')
     parser.add_argument('--value_clip', type = float, default = None, help  = 'THer value by which we should clip the value loss')
+    parser.add_argument('--file_returns',type = str, default = None,  help = "Enter a CSV  file name to store  returns")
+    parser.add_argument('--grad_clip_norm' , type = float, default = None, help = "Clip the gradient norm")
+
+
+
 
     args = parser.parse_args()
     print(args)
