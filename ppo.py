@@ -31,7 +31,7 @@ from utils import  env_fn, collect_batch
 stats = dict()
 
 def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_count, gamma, l, max_action, outdir,
-         ep_time, updates, optimizer, lr,scale_action  , env_type,normalize_observation , vfc, grad_clip_value, value_clip,  file_returns, grad_clip_norm):
+         ep_time, updates, optimizer, lr,scale_action  , env_type,normalize_observation , vfc, grad_clip_value, value_clip,  file_returns, grad_clip_norm, use_ss):
     
     stats['cycle_time'] = cycle_time
     stats['eps_len'] = ep_time
@@ -86,9 +86,13 @@ def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_cou
     # CHANGEME : chnage the range  of action_limits
     actions_space = env.action_space.shape[0]
     print("Observation Length : {}\nAction Lenght : {}".format(obs_len, actions_space))
-
-    nnet =  PPONetwork( action_count= actions_space, in_size= obs_len, action_limits = [-max_action,max_action], scale_action  = max_action)
-    nnet =  PPONetwork2( action_count= actions_space, in_size= obs_len, action_limits = [-max_action,max_action], scale_action  = max_action)
+    nnet = None
+    if not use_ss:
+        print("Using state indepenednt standard deviation")
+        nnet =  PPONetwork( action_count= actions_space, in_size= obs_len, action_limits = [-max_action,max_action], scale_action  = max_action)
+    else:
+        print("Using state dependent standard deviation")
+        nnet =  PPONetwork2( action_count= actions_space, in_size= obs_len, action_limits = [-max_action,max_action], scale_action  = max_action)
     nnet.to(device)
     nnet = nnet.double()
     agent = PPO (device = device,  # cpu or cuda
@@ -163,6 +167,8 @@ if __name__ == "__main__":
     parser.add_argument('--value_clip', type = float, default = None, help  = 'THer value by which we should clip the value loss')
     parser.add_argument('--file_returns',type = str, default = None,  help = "Enter a CSV  file name to store  returns")
     parser.add_argument('--grad_clip_norm' , type = float, default = None, help = "Clip the gradient norm")
+    parser.add_argument('--use_ss', type = str2bool, default = True, help = "Bool to specify wether to use state dependent standard deviation")
+
 
 
 
