@@ -33,6 +33,11 @@ stats = dict()
 def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_count, gamma, l, max_action, outdir,
          ep_time, updates, optimizer, lr,scale_action  , env_type,normalize_observation , vfc, grad_clip_value, value_clip,  file_returns, grad_clip_norm, use_ss):
     
+    # create a filename 
+    current_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time.time()))
+    if file_returns is None:
+        file_returns = "Env_{}_optimzer_{}_lr_{}_scaleaction_{}_normalize_obs_{}_vfc_{}_gradclipvalue_{}_value_clip_{}_gradclipnorm_{}_usess_{}_{}.csv".format( env_type, optimizer, lr,scale_action  , normalize_observation , vfc, grad_clip_value, value_clip, grad_clip_norm, use_ss, current_time)
+    print("saving returns in :{}".format(file_returns))
     stats['cycle_time'] = cycle_time
     stats['eps_len'] = ep_time
     stats['batch'] = batch_size
@@ -76,6 +81,10 @@ def main(cycle_time, idn, baud, port_str, batch_size, mini_batch_size, epoch_cou
         env = gym.make('MountainCarContinuous-v0')
     if env_type == 'ur5':
         env = robotic_env_fn()
+    if env_type == 'hopper':
+        env = gym.make('Hopper-v2')
+    if env_type == 'ant':
+        env = gym.make('Ant-v2')
     
     # env = env_fn()
     # env = gym.make('Reacher-v2')
@@ -173,8 +182,9 @@ if __name__ == "__main__":
 
 
 
+
     args = parser.parse_args()
     print(args)
-    time.sleep(5)
+    time.sleep(1)
     main(**args.__dict__)
     
