@@ -24,8 +24,16 @@ Problems :
 Hmm , it seems that the sacle action false is not working
 sedcoiind, need to test the noramlization of th observatio spac eand also need to clips the observations between -0.5, 0.5
 
+
+Working  
 Okay We are now getting respectible performance on the FetchReach environment, with the following running commnad:
 1.  python ppo.py --env_type fetch  --file_returns fetch_grad_norm_0_5_value_clip_0_5_2.csv --grad_clip_norm 0.5 --value_clip 0.5
 
 And the csv files with the results  are as follow ; 
 1. results/fetch_grad_norm_0_5_value_clip_0_5_1.csv  and results/fetch_grad_norm_0_5_value_clip_0_5_2.csv
+
+## Note for the ongoing UR5 experiments with my PPO Code
+
+Naming Conventiosn : exp_ur5_{}/ 
+
+
